@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -15,6 +14,7 @@ import {
   Heading2,
   Type
 } from 'lucide-react';
+import AdvancedToolbar from './AdvancedToolbar';
 
 interface User {
   id: string;
@@ -117,7 +117,7 @@ const Editor: React.FC<EditorProps> = ({
     <div className="flex-1 flex flex-col bg-gray-50/30">
       {/* Toolbar */}
       <div className="bg-white border-b border-gray-200 px-6 py-3">
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 overflow-x-auto">
           {/* Heading Controls */}
           <div className="flex items-center space-x-1 mr-4 pr-4 border-r">
             {headingButtons.map(({ command, icon: Icon, label, value }) => (
@@ -135,7 +135,7 @@ const Editor: React.FC<EditorProps> = ({
           </div>
 
           {/* Text Formatting */}
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 mr-4 pr-4 border-r">
             {toolbarButtons.map(({ command, icon: Icon, label, value }) => (
               <Button
                 key={command}
@@ -149,6 +149,9 @@ const Editor: React.FC<EditorProps> = ({
               </Button>
             ))}
           </div>
+
+          {/* Advanced Toolbar */}
+          <AdvancedToolbar onFormatText={formatText} />
         </div>
       </div>
 

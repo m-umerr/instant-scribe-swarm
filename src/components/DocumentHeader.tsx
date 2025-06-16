@@ -1,10 +1,12 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Share2, Download, Settings, FileText, Copy, Check } from 'lucide-react';
+import { Share2, Download, Settings, FileText, Copy, Check, FolderOpen, Plus } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import UserPresence from './UserPresence';
+import DocumentList from './DocumentList';
+import ExportDialog from './ExportDialog';
 import { toast } from 'sonner';
 
 interface User {
@@ -21,6 +23,8 @@ interface DocumentHeaderProps {
   documentTitle: string;
   documentId: string;
   onTitleChange: (title: string) => void;
+  onDocumentSelect: (documentId: string) => void;
+  onNewDocument: () => void;
 }
 
 const DocumentHeader: React.FC<DocumentHeaderProps> = ({
@@ -28,11 +32,15 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   currentUser,
   documentTitle,
   documentId,
-  onTitleChange
+  onTitleChange,
+  onDocumentSelect,
+  onNewDocument
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(documentTitle);
   const [isCopied, setIsCopied] = useState(false);
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+  const [isDocumentListOpen, setIsDocumentListOpen] = useState(false);
 
   const handleTitleSave = () => {
     onTitleChange(tempTitle);
@@ -105,6 +113,35 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             <UserPresence users={users} currentUser={currentUser} />
             
             <div className="flex items-center space-x-2 border-l pl-4">
+              {/* Document Management */}
+              <Dialog open={isDocumentListOpen} onOpenChange={setIsDocumentListOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <FolderOpen className="h-4 w-4 mr-2" />
+                    Documents
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Document Management</DialogTitle>
+                  </DialogHeader>
+                  <DocumentList 
+                    onDocumentSelect={(docId) => {
+                      onDocumentSelect(docId);
+                      setIsDocumentListOpen(false);
+                    }}
+                    currentDocumentId={documentId}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              {/* New Document */}
+              <Button variant="ghost" size="sm" onClick={onNewDocument}>
+                <Plus className="h-4 w-4 mr-2" />
+                New
+              </Button>
+
+              {/* Share */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="ghost" size="sm">
@@ -148,10 +185,12 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
                 </PopoverContent>
               </Popover>
               
-              <Button variant="ghost" size="sm">
+              {/* Export */}
+              <Button variant="ghost" size="sm" onClick={() => setIsExportDialogOpen(true)}>
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
+
               <Button variant="ghost" size="sm">
                 <Settings className="h-4 w-4" />
               </Button>
@@ -159,6 +198,13 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
           </div>
         </div>
       </div>
+
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        documentTitle={documentTitle}
+        documentContent={""} // This will be passed from parent component
+      />
     </header>
   );
 };

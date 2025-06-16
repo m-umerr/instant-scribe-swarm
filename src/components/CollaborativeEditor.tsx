@@ -1,8 +1,10 @@
-
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useCollaborativeSession } from '@/hooks/useCollaborativeSession';
+import { supabase } from '@/integrations/supabase/client';
 import DocumentHeader from './DocumentHeader';
 import Editor from './Editor';
+import ExportDialog from './ExportDialog';
+import { toast } from 'sonner';
 
 const CollaborativeEditor: React.FC = () => {
   // Get document ID from URL parameters
@@ -19,6 +21,8 @@ const CollaborativeEditor: React.FC = () => {
     updateDocumentTitle
   } = useCollaborativeSession(documentId);
 
+  const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
+
   // Update the browser URL when document changes
   useEffect(() => {
     if (document && document.id !== 'default') {
@@ -34,6 +38,37 @@ const CollaborativeEditor: React.FC = () => {
 
   const handleTitleChange = (newTitle: string) => {
     updateDocumentTitle(newTitle);
+  };
+
+  const handleDocumentSelect = (newDocumentId: string) => {
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('doc', newDocumentId);
+    window.location.href = newUrl.toString();
+  };
+
+  const handleNewDocument = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          title: 'New Document',
+          content: '<h1>New Document</h1><p>Start writing here...</p>'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating document:', error);
+        toast.error('Failed to create document');
+        return;
+      }
+
+      toast.success('New document created!');
+      handleDocumentSelect(data.id);
+    } catch (error) {
+      console.error('Error creating document:', error);
+      toast.error('Failed to create document');
+    }
   };
 
   if (isLoading || !currentUser || !document) {
@@ -55,6 +90,8 @@ const CollaborativeEditor: React.FC = () => {
         documentTitle={document.title}
         documentId={document.id}
         onTitleChange={handleTitleChange}
+        onDocumentSelect={handleDocumentSelect}
+        onNewDocument={handleNewDocument}
       />
       <Editor
         users={users}
@@ -62,6 +99,13 @@ const CollaborativeEditor: React.FC = () => {
         documentContent={document.content || ''}
         onContentChange={handleContentChange}
         onCursorMove={updateUserCursor}
+      />
+      
+      <ExportDialog
+        isOpen={isExportDialogOpen}
+        onClose={() => setIsExportDialogOpen(false)}
+        documentTitle={document.title}
+        documentContent={document.content || ''}
       />
     </div>
   );
