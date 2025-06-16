@@ -45,13 +45,39 @@ export const useCollaborativeSession = (documentId: string) => {
         .single();
 
       if (!doc) {
-        // Get the default document if specific ID not found
-        const { data: defaultDoc } = await supabase
-          .from('documents')
-          .select('*')
-          .limit(1)
-          .single();
-        doc = defaultDoc;
+        if (documentId === 'default') {
+          // Get the default document if specific ID not found
+          const { data: defaultDoc } = await supabase
+            .from('documents')
+            .select('*')
+            .limit(1)
+            .single();
+          doc = defaultDoc;
+        } else {
+          // Create a new document with the specified ID if it doesn't exist
+          const { data: newDoc, error } = await supabase
+            .from('documents')
+            .insert({
+              id: documentId,
+              title: 'New Shared Document',
+              content: '<h1>Welcome to your shared document!</h1><p>Start collaborating by typing here...</p>'
+            })
+            .select()
+            .single();
+          
+          if (error) {
+            console.error('Error creating document:', error);
+            // Fallback to default document
+            const { data: defaultDoc } = await supabase
+              .from('documents')
+              .select('*')
+              .limit(1)
+              .single();
+            doc = defaultDoc;
+          } else {
+            doc = newDoc;
+          }
+        }
       }
 
       setDocument(doc);

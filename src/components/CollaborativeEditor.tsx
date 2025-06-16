@@ -1,12 +1,13 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useCollaborativeSession } from '@/hooks/useCollaborativeSession';
 import DocumentHeader from './DocumentHeader';
 import Editor from './Editor';
 
 const CollaborativeEditor: React.FC = () => {
-  // Use the first document for now - you could get this from URL params
-  const documentId = 'default';
+  // Get document ID from URL parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const documentId = urlParams.get('doc') || 'default';
   
   const {
     currentUser,
@@ -17,6 +18,15 @@ const CollaborativeEditor: React.FC = () => {
     updateDocumentContent,
     updateDocumentTitle
   } = useCollaborativeSession(documentId);
+
+  // Update the browser URL when document changes
+  useEffect(() => {
+    if (document && document.id !== 'default') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.set('doc', document.id);
+      window.history.replaceState({}, '', newUrl.toString());
+    }
+  }, [document]);
 
   const handleContentChange = (content: string) => {
     updateDocumentContent(content);
@@ -43,6 +53,7 @@ const CollaborativeEditor: React.FC = () => {
         users={users}
         currentUser={currentUser}
         documentTitle={document.title}
+        documentId={document.id}
         onTitleChange={handleTitleChange}
       />
       <Editor

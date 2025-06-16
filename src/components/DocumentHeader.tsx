@@ -2,8 +2,10 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Share2, Download, Settings, FileText } from 'lucide-react';
+import { Share2, Download, Settings, FileText, Copy, Check } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import UserPresence from './UserPresence';
+import { toast } from 'sonner';
 
 interface User {
   id: string;
@@ -17,6 +19,7 @@ interface DocumentHeaderProps {
   users: User[];
   currentUser: User;
   documentTitle: string;
+  documentId: string;
   onTitleChange: (title: string) => void;
 }
 
@@ -24,10 +27,12 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
   users,
   currentUser,
   documentTitle,
+  documentId,
   onTitleChange
 }) => {
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState(documentTitle);
+  const [isCopied, setIsCopied] = useState(false);
 
   const handleTitleSave = () => {
     onTitleChange(tempTitle);
@@ -40,6 +45,28 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
     } else if (e.key === 'Escape') {
       setTempTitle(documentTitle);
       setIsEditingTitle(false);
+    }
+  };
+
+  const generateShareLink = () => {
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/?doc=${documentId}`;
+  };
+
+  const handleShare = async () => {
+    const shareLink = generateShareLink();
+    
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setIsCopied(true);
+      toast.success('Share link copied to clipboard!');
+      
+      setTimeout(() => {
+        setIsCopied(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      toast.error('Failed to copy link to clipboard');
     }
   };
 
@@ -78,10 +105,49 @@ const DocumentHeader: React.FC<DocumentHeaderProps> = ({
             <UserPresence users={users} currentUser={currentUser} />
             
             <div className="flex items-center space-x-2 border-l pl-4">
-              <Button variant="ghost" size="sm">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80">
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="font-medium text-sm mb-2">Share this document</h3>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        Anyone with this link can view and edit the document
+                      </p>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        value={generateShareLink()}
+                        readOnly
+                        className="text-sm"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleShare}
+                        className="flex-shrink-0"
+                      >
+                        {isCopied ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    
+                    <div className="text-xs text-muted-foreground">
+                      Share this link with others to collaborate in real-time
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              
               <Button variant="ghost" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export
