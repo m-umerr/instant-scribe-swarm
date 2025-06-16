@@ -9,7 +9,110 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      document_operations: {
+        Row: {
+          created_at: string
+          document_id: string
+          id: string
+          operation: Json
+          user_session_id: string
+        }
+        Insert: {
+          created_at?: string
+          document_id: string
+          id?: string
+          operation: Json
+          user_session_id: string
+        }
+        Update: {
+          created_at?: string
+          document_id?: string
+          id?: string
+          operation?: Json
+          user_session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_operations_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_operations_user_session_id_fkey"
+            columns: ["user_session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          content: string | null
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_sessions: {
+        Row: {
+          color: string
+          created_at: string
+          cursor_x: number | null
+          cursor_y: number | null
+          document_id: string | null
+          id: string
+          last_seen: string
+          name: string
+        }
+        Insert: {
+          color: string
+          created_at?: string
+          cursor_x?: number | null
+          cursor_y?: number | null
+          document_id?: string | null
+          id: string
+          last_seen?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          cursor_x?: number | null
+          cursor_y?: number | null
+          document_id?: string | null
+          id?: string
+          last_seen?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_sessions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

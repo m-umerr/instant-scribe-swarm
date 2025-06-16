@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
@@ -26,6 +27,7 @@ interface User {
 interface EditorProps {
   users: User[];
   currentUser: User;
+  documentContent: string;
   onContentChange: (content: string) => void;
   onCursorMove: (position: { x: number; y: number }) => void;
 }
@@ -33,18 +35,38 @@ interface EditorProps {
 const Editor: React.FC<EditorProps> = ({ 
   users, 
   currentUser, 
+  documentContent,
   onContentChange, 
   onCursorMove 
 }) => {
-  const [content, setContent] = useState('<p>Start typing your document here...</p>');
+  const [content, setContent] = useState(documentContent);
   const [activeFormats, setActiveFormats] = useState<Set<string>>(new Set());
   const editorRef = useRef<HTMLDivElement>(null);
+  const contentUpdateTimeoutRef = useRef<NodeJS.Timeout>();
+
+  // Update local content when document content changes from other users
+  useEffect(() => {
+    if (documentContent !== content) {
+      setContent(documentContent);
+      if (editorRef.current) {
+        editorRef.current.innerHTML = documentContent;
+      }
+    }
+  }, [documentContent]);
 
   const handleContentChange = () => {
     if (editorRef.current) {
       const newContent = editorRef.current.innerHTML;
       setContent(newContent);
-      onContentChange(newContent);
+      
+      // Debounce content updates to avoid too many database writes
+      if (contentUpdateTimeoutRef.current) {
+        clearTimeout(contentUpdateTimeoutRef.current);
+      }
+      
+      contentUpdateTimeoutRef.current = setTimeout(() => {
+        onContentChange(newContent);
+      }, 500);
     }
   };
 
